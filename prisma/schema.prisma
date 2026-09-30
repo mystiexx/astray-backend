@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String               @unique @default(uuid())
+  email              String
+  fullName           String
+  phoneNumber        String
+  hostName           String
+  password           String
+  createdAt          Int
+  updatedAt          Int
+  events             Event[]
+  tickets            Ticket[]
+  Order              Order[]
+  VirtualAccount     VirtualAccount[]
+  PasswordResetTrack PasswordResetTrack[]
+}
+
+model Admin {
+  id        String @unique @default(uuid())
+  email     String
+  password  String
+  createdAt Int
+  updatedAt Int
+}
+
+model VirtualAccount {
+  id               String @unique @default(uuid())
+  accountFullName  String
+  accountNumber    String
+  bankName         String
+  bankCode         String
+  subAccountNumber String
+  createdAt        Int
+  updatedAt        Int
+  user             User   @relation(fields: [userId], references: [id])
+  userId           String
+}
+
+model EventCategory {
+  id        String @unique @default(uuid())
+  name      String @unique
+  createdAt Int
+  updatedAt Int
+
+  events Event[]
+}
+
+model Event {
+  id              String         @unique @default(uuid())
+  createdAt       Int
+  updatedAt       Int
+  name            String
+  address         String
+  country         String
+  description     String
+  endDate         String
+  startDate       String
+  state           String
+  image           String
+  isDeleted       Boolean        @default(false)
+  status          String         @default("DRAFT")
+  tickets         Ticket[]
+  User            User?          @relation(fields: [userId], references: [id])
+  userId          String?
+  EventCategory   EventCategory? @relation(fields: [eventCategoryId], references: [id])
+  eventCategoryId String?
+  Order           Order[]
+}
+
+model Ticket {
+  id        String  @unique @default(uuid())
+  createdAt Int
+  updatedAt Int
+  name      String
+  quantity  Int
+  price     Float
+  color     String  @default("#282020")
+  sold      Int     @default(0)
+  isDeleted Boolean @default(false)
+  soldOut   Boolean @default(false)
+  Event     Event?  @relation(fields: [eventId], references: [id])
+  eventId   String?
+  User      User?   @relation(fields: [userId], references: [id])
+  userId    String?
+  Order     Order[]
+}
+
+model Payment {
+  id        String  @unique @default(uuid())
+  createdAt Int
+  updatedAt Int
+  ref       String  @unique
+  amount    Float
+  email     String
+  status    String  @default("PENDING")
+  ticketId  String? @default("PENDING")
+  quantity  Int?    @default(0)
+  Order     Order[]
+}
+
+model Order {
+  id             String  @unique @default(uuid())
+  bookingId      String
+  email          String
+  quantity       Int
+  ref            String
+  total          Int
+  checkedIn      Int
+  fullyCheckedIn Boolean
+  status         String
+
+  createdAt Int @default(1713089714)
+  updatedAt Int @default(1713089714)
+
+  Ticket  Ticket  @relation(fields: [ticketId], references: [id])
+  Event   Event   @relation(fields: [eventId], references: [id])
+  Payment Payment @relation(fields: [paymentId], references: [id])
+
+  paymentId String
+  ticketId  String
+  eventId   String
+  User      User?   @relation(fields: [userId], references: [id])
+  userId    String?
+}
+
+model PasswordResetTrack {
+  id          String  @unique @default(uuid())
+  createdAt   Int
+  updatedAt   Int
+  validBefore Int
+  email       String
+  resetCode   String
+  isArchived  Boolean @default(false)
+  isVerified  Boolean @default(false)
+  User        User?   @relation(fields: [userId], references: [id])
+  userId      String
+}
